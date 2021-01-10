@@ -1,13 +1,58 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"log"
+	"net/http"
 
-//functions
+	"github.com/gorilla/mux"
+)
+
+type Book struct {
+	ID     string
+	Title  string
+	Author string
+	Year   string
+}
+
+var books []Book
+
 func main() {
-	tums := []int{10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 7, 6, 5, 4, 3, 2}
-	sums := make([]int, 10)
+	books = append(books, Book{"1", "Book1", "Author1", "2001"},
+		Book{"2", "Book2", "Author2", "2003"},
+		Book{"3", "Book3", "Author3", "2001"})
 
-	copy(sums, tums)
+	router := mux.NewRouter()
+	router.HandleFunc("/books", getBooks).Methods("GET")
+	router.HandleFunc("/books/{id}", getBook).Methods("GET")
+	router.HandleFunc("/books", addBook).Methods("POST")
+	router.HandleFunc("/books", updateBook).Methods("PUT")
+	router.HandleFunc("/books/{id}", removeBook).Methods("DELETE")
+	log.Fatal(http.ListenAndServe(":8000", router))
 
-	fmt.Println(sums)
+}
+
+func getBooks(writer http.ResponseWriter, request *http.Request) {
+	json.NewEncoder(writer).Encode(books)
+}
+func getBook(writer http.ResponseWriter, request *http.Request) {
+	params := mux.Vars(request)
+
+	for _, book := range books {
+		if book.ID == params["id"] {
+			json.NewEncoder(writer).Encode(book)
+		}
+	}
+	log.Println(params)
+}
+func addBook(writer http.ResponseWriter, request *http.Request) {
+	var book Book
+	json.NewDecoder(request.Body).Decode(book)
+
+}
+func updateBook(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Look up book in DB and update it")
+}
+func removeBook(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Remove book from DB")
 }
